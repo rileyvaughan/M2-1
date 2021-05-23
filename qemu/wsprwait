@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+
+set AUDIODEV=hw:1
+
+DECODER=~/M2-1/qemu/wsprcan/k9an-wsprd
+IQFILE="iq.wav"
+AUDIOFILE="audio.wav"
+
+./si5351
+
+while true
+do
+	sec=$(date +'%S')
+	min=$(date +'%M')
+	# wait for an even minute
+	if (("10#$min" % 2 == 0 && "10#$sec" == 0 )); then
+		echo -n "Executing wspr_decode "
+		date
+		rec -V1 -c 1 -t wav ${IQFILE} trim 0 118 &>/dev/null
+		sox ${IQFILE} -c 1 -t wav -r 12000 -b 16 ${AUDIOFILE}
+		${DECODER} ${AUDIOFILE}
+	elif ((10#$sec < 49)); then
+		sleep 10
+	fi
+done
